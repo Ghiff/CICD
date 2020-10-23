@@ -1,0 +1,42 @@
+# Operating System
+os :
+    - linux
+  
+# language
+language : php
+  
+# distory
+dist : trusty
+  
+# language -v
+php :
+    - '7.1'
+  
+# service used
+services :
+    - docker
+  
+  # grouping task
+jobs :
+    include :
+  
+    # testing block
+    - stage : "Tests"
+      name : "Unit Test PHP"
+      script :
+      - travis_retry composer self-update
+      - travis_retry composer install --prefer-source --no-interaction
+      - cp .env.example .env
+      - php artisan key:generate
+      - php artisan key:generate --show
+      - vendor/bin/phpunit tests/Feature/ExampleTest.php
+  
+      # building image and docker hub push
+    - stage : "Build Docker Image"
+      name : "Build Images Docker"
+      script :
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - docker build -t travis-ci-build-stages-demo .
+      - docker images
+      - docker tag travis-ci-build-stages-demo $DOCKER_USERNAME/cicd-dti
+      - docker push $DOCKER_USERNAME/cicd-dti
